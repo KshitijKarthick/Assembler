@@ -4,6 +4,7 @@ def createSymbolTable(optable,filename):
   loc_Ctr=0
   symtable=dict()
   errorFlags=0
+  errors=list()
   fp=open(filename,'r')
   data=fp.readLines()
   fp.close()
@@ -19,6 +20,7 @@ def createSymbolTable(optable,filename):
         data=data[1:]
       except:
         print "Error! Syntax Error at Line:"+str(line)+" no\nPlease enter a valid address"
+        exit(-1)
 
   for x in data:
     line=line+1
@@ -26,10 +28,12 @@ def createSymbolTable(optable,filename):
     args=x.__len__()
     if(args==3):
       label,opcode,operand=inputLine
-
+      if(errors.count(operand)==0)
+        errors.append(operand)
     else if (args==2):
       opcode,operand=inputLine
-
+      if(errors.count(operand)==0)
+        errors.append(operand)
     else if (args==1):
       opcode=inputLine
       if opcode=='//':
@@ -47,18 +51,26 @@ def createSymbolTable(optable,filename):
       if(opcode=='WORD' or opcode=='word'):
         symtable[label]=[loc_Ctr,errorFlags]
         loc_Ctr=loc_Ctr+3
+        if(errors.count(operand)==1):
+          errors.remove(operand)
 
       else if(opcode=='RESW' or opcode=='resw'):
         symtable[label]=[loc_Ctr,errorFlags]
         loc_Ctr=loc_Ctr+(3*int(operand))
+        if(errors.count(operand)==1):
+          errors.remove(operand)
 
       else if(opcode=='RESB' or opcode=='resb'):
         symtable[label]=[loc_Ctr,errorFlags]
         loc_Ctr=loc_Ctr+int(operand)
+        if(errors.count(operand)==1):
+          errors.remove(operand)
 
       else if(opcode=='BYTE'or opcode=='byte'):
         symtable[label]=[loc_Ctr,errorFlags]
         loc_Ctr=loc_Ctr+(operand.__len__())
+        if(errors.count(operand)==1):
+          errors.remove(operand)
 
       else if((optable[opcode])[2] && args==3):
         symtable[label]=[loc_Ctr,errorFlags]
@@ -69,26 +81,60 @@ def createSymbolTable(optable,filename):
 
     except:
       print "Error! Syntax Error at Line:"+str(line)+" no\n"+inputLine+" is not valid Assembly Code"
+      exit(-1)
+  if(errors.__len__()!=0):
+    for x in errors:
+      print "Error! Syntax Error Operand "+x+" is Undeclared in the Assembly Code\n
+    exit(-1)
   return symtable
 
 def assemble(filename):
-  symtable=pass1(filename)
-  pass2(filename)
-
-def pass1(filename):
   optable=loadOpTable()
+  symtable=pass1(filename,optable)
+  pass2(filename,symtable,optable)
+
+def pass1(filename,optable):
   symtable=createSymbolTable(optable,filename)
-  symtable=validateSymbolTable(symtable)
   fp=open('symtable.dat','w')
   symbol=symtable.keys()
   address=[hex(int(x)) for x in symtable.values()]
   for x in symbol and y in address:
-    fp.write(x+"-"+y)
+    fp.write(x+" "+y)
   fp.close()
   return symtable
-  
-def pass2(filename):
-  print "test"
+
+def pass2(filename,symtable,optable):
+  fp=open(filename,'r')
+  data=fp.readLines()
+  fp.close()
+  fp=open('ObjectFile.dat','w')
+  firstLine=data[0]
+  firstLine=(firstLine.strip()).split()
+  args=data.__len__()
+  if args==3:
+    label,opcode,operand=data
+    if (opcode=='START' or opcode=='start'):
+        data=data[1:]
+        
+  for x in data:
+    inputLine=((x.strip()).split()).strip()
+    args=x.__len__()
+    if(args==3):
+      label,opcode,operand=inputLine
+      fp.write(optable[opcode]+''+symtable[operand])
+    else if (args==2):
+      opcode,operand=inputLine
+      fp.write(optable[opcode]+''+symtable[operand])
+    else if (args==1):
+      opcode=inputLine
+      if opcode=='//':
+        continue
+      else if opcode == 'END' or opcode == 'end':
+        break
+      fp.write(optable[opcode])
+    else if (args==0):
+        continue
+
 
 def loadOpTable():
   optable=dict()
@@ -101,8 +147,6 @@ def loadOpTable():
   fp.close()
   return optable
 
-def loadSymbolTable():
-  print "test"
 if len(sys.argv)<2:
   print "Error! no Input file detected"
 else:
