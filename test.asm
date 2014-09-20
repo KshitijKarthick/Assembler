@@ -1,4 +1,6 @@
-Add Zero
-Sum Add Eleven
-Zero resw 1
-Eleven resw 1
+Program START 10
+ADD Zero
+Subtract SUB Eleven
+Zero RESW 1
+Eleven BYTE 1
+END Program

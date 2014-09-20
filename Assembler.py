@@ -5,19 +5,21 @@ def createSymbolTable(optable,filename):
   loc_Ctr=0                                                   #Linear Addres Generated.
   symtable=dict()
   errors=list()                                               #List of undeclared operands.
+  errors.append("end")                                        #Make Sure and end statement is present in the Program.
   fp=open(filename,'r')
   data=fp.readlines()                                         #Read Source File.
   fp.close()
+  program_name=""
   line=0
-                                                              #Check for Start Instruction.
   firstLine=data[0]
   firstLine=(firstLine.strip()).split()
   args=firstLine.__len__()
   if args==3:
     label,opcode,operand=firstLine
-    if (opcode=='START' or opcode=='start'):                  #Different Linear Start Address.
+    if (opcode=='START' or opcode=='start'):                  #Check for Start Instruction.
+      program_name=label
       try:
-        loc_Ctr=int(operand)
+        loc_Ctr=int(operand)                                  #Different Linear Start Address.
         data=data[1:]                                         #Delete Start instruction.
       except:
         print "Error! Syntax Error at Line:"+str(line)+" no\nPlease enter a valid address"
@@ -27,6 +29,7 @@ def createSymbolTable(optable,filename):
     line=line+1                                               #Line Count in Source Code.
     inputLine=((x.strip()).split())
     args=inputLine.__len__()
+
     if(args==3):                                              #Contains label,opcode,operand
       label,opcode,operand=inputLine
       if(opcode!='resb' and opcode!='byte' and opcode!='word' and opcode!='resw' and opcode!='RESB' and opcode!='BYTE' and opcode!='WORD' and opcode!='RESW'):
@@ -34,15 +37,18 @@ def createSymbolTable(optable,filename):
           errors.append(operand)
     elif(args==2):                                            #Contains opcode,operand.
       opcode,operand=inputLine
+      if((opcode == 'END' or opcode == 'end') and operand == program_name):
+        errors.remove("end")
+        break;
       if(errors.count(operand==0)):
         errors.append(operand)
     elif(args==1):                                            #Contains operand.
-      opcode=inputLine
+      opcode=inputLine[0]
       if opcode=='//':                                        #Skip Comment Lines.
         continue
       elif(opcode == 'END' or opcode == 'end'):               #Indicates end of Source File.
+        errors.remove("end")
         break
-
     elif(args==0):                                            #Skip Blank Lines.
         continue
     else:                                                     #Should contain only maximum 3 arguments.
@@ -79,7 +85,6 @@ def createSymbolTable(optable,filename):
 
       elif((optable[opcode])[2]):
         loc_Ctr=loc_Ctr+int((optable[opcode])[2])             #Linear Address + Length of Operation
-
     except KeyError:                                          #Opcode is Missing.
       print "Error! Syntax Error at Line:",str(line)," no\n",inputLine," is not valid Assembly Code"
       exit(-1)
@@ -91,8 +96,11 @@ def createSymbolTable(optable,filename):
 
 def assemble(filename):
   optable=loadOpTable()                                       #Load OpTable from optable.dat.
+  print "\nSuccessfully Loaded OpCode Table for the Machine : optable.dat\n"
   symtable=pass1(filename,optable)                            #Create Symbol Table and Validate Source Code.
+  print "Successfully created Symbol Table for the input program : symtable.dat\n"
   pass2(filename,symtable,optable)                            #Map Linear Address with required Opcode from Optable.
+  print "Successfully created Object Code for the input program : Objectfile\n"
 
 def pass1(filename,optable):
   symtable=createSymbolTable(optable,filename)                #Create Symbol Table.
@@ -110,14 +118,16 @@ def pass2(filename,symtable,optable):
   fp=open(filename,'r')
   data=fp.readlines()
   fp.close()
-  fp=open('ObjectFile.dat','w')
+  program_name=""
+  fp=open('ObjectFile','w')
   firstLine=data[0]                                            #Check of first Line is Start operation.
   firstLine=(firstLine.strip()).split()
-  args=data.__len__()
+  args=firstLine.__len__()
   if args==3:
-    label,opcode,operand=data
+    label,opcode,operand=firstLine
     if (opcode=='START' or opcode=='start'):
-        data=data[1:]                                         #Delete operation.
+      program_name=label
+      data=data[1:]                                         #Delete operation.
 
   for x in data:
     inputLine=((x.strip()).split())
@@ -125,13 +135,14 @@ def pass2(filename,symtable,optable):
     if(args==3):                                              #Contains label,opcode,operand.
       label,opcode,operand=inputLine
       if(opcode!='resb' and opcode!='byte' and opcode!='word' and opcode!='resw' and opcode!='RESB' and opcode!='BYTE' and opcode!='WORD' and opcode!='RESW'):
-        fp.write(str((optable[opcode])[0])+''+str(symtable[label])+' ')
+        fp.write(str((optable[opcode])[0])+''+str(symtable[operand])+' ')
     elif(args==2):                                            #Contains opcode,operand.
       opcode,operand=inputLine
-      print opcode,operand,optable[opcode],symtable[operand]
+      if((opcode == 'END' or opcode == 'end') and operand == program_name):
+        break
       fp.write(str((optable[opcode])[0])+''+str(symtable[operand])+' ')       # Error Gotta Fix, gotta compute all addresses and save, not just the ones with the label.
     elif(args==1):                                            #Contains opcode
-      opcode=inputLine
+      opcode=inputLine[0]
       if opcode=='//':                                        #skip comment.
         continue
       elif(opcode == 'END' or opcode == 'end'):               #Terminatation of Source Code.
