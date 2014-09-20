@@ -1,7 +1,9 @@
 #!/bin/env/python2
 import sys
+program_length=0
 ### Creates Symbol Table using statically defined optable and source code.
 def createSymbolTable(optable,filename):
+  global program_length
   loc_Ctr=0                                                   #Linear Addres Generated.
   symtable=dict()
   errors=list()                                               #List of undeclared operands.
@@ -88,6 +90,7 @@ def createSymbolTable(optable,filename):
     except KeyError:                                          #Opcode is Missing.
       print "Error! Syntax Error at Line:",str(line)," no\n",inputLine," is not valid Assembly Code"
       exit(-1)
+    program_length=loc_Ctr
   if(errors.__len__()!=0):                                    #Variables Undeclared.
     for x in errors:
       print "Error! Syntax Error Operand "+x+" is Undeclared in the Assembly Code\n"
@@ -100,7 +103,7 @@ def assemble(filename):
   symtable=pass1(filename,optable)                            #Create Symbol Table and Validate Source Code.
   print "Successfully created Symbol Table for the input program : symtable.dat\n"
   pass2(filename,symtable,optable)                            #Map Linear Address with required Opcode from Optable.
-  print "Successfully created Object Code for the input program : Objectfile\n"
+  print "Successfully created Object Code for the input program : ObjectFile\n"
 
 def pass1(filename,optable):
   symtable=createSymbolTable(optable,filename)                #Create Symbol Table.
@@ -115,10 +118,12 @@ def pass1(filename,optable):
   return symtable_Hex
 
 def pass2(filename,symtable,optable):
+  global program_length
   fp=open(filename,'r')
   data=fp.readlines()
   fp.close()
-  program_name=""
+  program_name="Program"
+  start_address=0
   fp=open('ObjectFile','w')
   firstLine=data[0]                                            #Check of first Line is Start operation.
   firstLine=(firstLine.strip()).split()
@@ -127,25 +132,33 @@ def pass2(filename,symtable,optable):
     label,opcode,operand=firstLine
     if (opcode=='START' or opcode=='start'):
       program_name=label
+      start_address=hex(int(operand))
       data=data[1:]                                         #Delete operation.
-
+  program_length=program_length-int(start_address,16)
+  program_length=hex(program_length)
+  fp.write('H'+'^'+program_name[0:5]+'^'+str(start_address)+'^'+str(program_length)+'\n')
+  fp.write('T'+'^')
   for x in data:
     inputLine=((x.strip()).split())
     args=inputLine.__len__()
     if(args==3):                                              #Contains label,opcode,operand.
       label,opcode,operand=inputLine
       if(opcode!='resb' and opcode!='byte' and opcode!='word' and opcode!='resw' and opcode!='RESB' and opcode!='BYTE' and opcode!='WORD' and opcode!='RESW'):
-        fp.write(str((optable[opcode])[0])+''+str(symtable[operand])+' ')
+        fp.write(str((optable[opcode])[0])+''+str(symtable[operand])+'^')
     elif(args==2):                                            #Contains opcode,operand.
       opcode,operand=inputLine
       if((opcode == 'END' or opcode == 'end') and operand == program_name):
+        fp.write('\nE'+'^'+start_address)
+        fp.close()
         break
-      fp.write(str((optable[opcode])[0])+''+str(symtable[operand])+' ')       # Error Gotta Fix, gotta compute all addresses and save, not just the ones with the label.
+      fp.write(str((optable[opcode])[0])+''+str(symtable[operand])+'^')
     elif(args==1):                                            #Contains opcode
       opcode=inputLine[0]
       if opcode=='//':                                        #skip comment.
         continue
       elif(opcode == 'END' or opcode == 'end'):               #Terminatation of Source Code.
+        fp.write('\nE'+'^'+start_address)
+        fp.close()
         break
       fp.write(optable[opcode])
     elif(args==0):                                            #Blank Line Skip.
