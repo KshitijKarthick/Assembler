@@ -34,3 +34,6 @@
 ```
   >> python2 Assembler.py [source-file]
 ```
+#### To Do :
+* Pass 2 Functionality needs to be validated.
+* Support for SIC/XE [Extended] needs to be incorporated.
