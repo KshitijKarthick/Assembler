@@ -1,6 +1,7 @@
-## ASSEMBLER - Proof of Concept :
+## SIC ASSEMBLER - Proof of Concept :
 
-### Basic Introduction of the SIC [Simplified Instruction Computer] Assembler :
+### Basic Introduction of the SIC Assembler :
+* SIC refers to Simplified Instruction Computer.
 * The Assembler is based on a Hypothetical Machine predefined in the book System Software by Leland L.Beck.
 * The Assembler is a Two Pass Assembler.
 * Seperate External input for Op Table is provided for customizing the Assembler to suit the user needs.
@@ -29,5 +30,7 @@
 * Text Record : T^MachineInstruction^MAchineInstruction^.....
 * End Record : E^Address-of-First-Executable
 
-#### Usage Instruction in Command Line :
-* $python2 Assembler.py [source-filename]
+#### Execution :
+```
+  >> python2 Assembler.py [source-file]
+```
