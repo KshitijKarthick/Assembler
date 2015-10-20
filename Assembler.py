@@ -1,4 +1,4 @@
-#!/bin/env/python2
+#!/usr/bin/env python2
 import sys
 class Assembler:
   """
@@ -24,10 +24,13 @@ class Assembler:
     """
 
     self.filename = filename
-    fp = open(filename,'r')
-    self.assembly_code = fp.readlines()                                    #Read Source File.
-    fp.close()
-    self.assemble()
+    try:
+      fp = open(filename,'r')
+      self.assembly_code = fp.readlines()                                    #Read Source File.
+      fp.close()
+      self.assemble()
+    except (OSError,IOError) as err:
+      print 'file: '+self.filename+' not found'
 
   def createSymbolTable(self):
     """
