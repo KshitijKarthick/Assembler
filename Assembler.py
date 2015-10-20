@@ -199,7 +199,7 @@ class Assembler:
     self.program_length -= int(start_address,16)
     self.program_length = hex(self.program_length)
     fp.write('H'+'^'+program_name[0:5]+'^'+str(start_address)+'^'+str(self.program_length)+'\n')
-    fp.write('T'+'^')
+    fp.write('T')
     for line in assembly_code:
       input_line = ((line.strip()).split())
       args = input_line.__len__()
@@ -208,7 +208,7 @@ class Assembler:
         label, opcode, operand = input_line
         opcode = opcode.upper()
         if(opcode!='RESB' and opcode!='BYTE' and opcode!='WORD' and opcode!='RESW'):
-          fp.write(str((self.optable[opcode])[0])+''+str(self.symtable[operand])+'^')
+          fp.write('^'+str((self.optable[opcode])[0])+''+str(self.symtable[operand]))
 
       elif(args==2):                                                      #Contains opcode,operand.
         opcode,operand=input_line
@@ -216,7 +216,7 @@ class Assembler:
           fp.write('\nE'+'^'+start_address)
           fp.close()
           break
-        fp.write(str((self.optable[opcode])[0])+''+str(self.symtable[operand])+'^')
+        fp.write('^'+str((self.optable[opcode])[0])+''+str(self.symtable[operand]))
 
       elif(args==1):                                                      #Contains opcode
         opcode=input_line[0]
