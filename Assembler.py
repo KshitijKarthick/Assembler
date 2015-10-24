@@ -122,12 +122,12 @@ class Assembler:
           if(errors.count(label)>0):
             errors.remove(label)                                          #Operand is Missing.
 
-        elif((self.optable[opcode])[2] and args==3):                      #Check if opcode is Declared in Optable.
+        elif((self.optable[opcode])[1] and args==3):                      #Check if opcode is Declared in Optable.
           self.symtable[label] = loc_Ctr                                  #Store Linear Address with Operation.
-          loc_Ctr += int((self.optable[opcode])[2])                       #Linear Address + Length of Operation.
+          loc_Ctr += int((self.optable[opcode])[1])                       #Linear Address + Length of Operation.
 
-        elif((self.optable[opcode])[2]):
-          loc_Ctr += int((self.optable[opcode])[2])                       #Linear Address + Length of Operation
+        elif((self.optable[opcode])[1]):
+          loc_Ctr += int((self.optable[opcode])[1])                       #Linear Address + Length of Operation
 
       except KeyError:                                                    #Opcode is Missing.
         print "Error! Syntax Error at Line:",str(line_no)," no\n",input_line," is not valid Assembly Code"
@@ -142,7 +142,7 @@ class Assembler:
 
   def assemble(self):
     """
-      Assembling Process -> 
+      Assembling Process ->
         Loading optable
         Pass 1 execution
         Pass 2 execution
@@ -165,13 +165,6 @@ class Assembler:
     self.createSymbolTable()                                              #Create Symbol Table.
     fp = open('symtable.dat','w')
     symbol = self.symtable.keys()
-    symtable_Hex = {}                                                     #Address conversion to Hexadecimal.
-    address = [hex(int(sym_addr)) for sym_addr in self.symtable.values()]
-    for x in range(symbol.__len__()):
-      fp.write(symbol[x]+" "+address[x]+"\n")
-      symtable_Hex[symbol[x]]=address[x]
-    fp.close()
-    self.symtable = symtable_Hex
 
   def pass2(self):
     """
@@ -208,7 +201,7 @@ class Assembler:
         label, opcode, operand = input_line
         opcode = opcode.upper()
         if(opcode!='RESB' and opcode!='BYTE' and opcode!='WORD' and opcode!='RESW'):
-          fp.write('^'+str((self.optable[opcode])[0])+''+str(self.symtable[operand]))
+          fp.write('^'+hex((self.optable[opcode])[0]+int(self.symtable[operand])))
 
       elif(args==2):                                                      #Contains opcode,operand.
         opcode,operand=input_line
@@ -216,7 +209,7 @@ class Assembler:
           fp.write('\nE'+'^'+start_address)
           fp.close()
           break
-        fp.write('^'+str((self.optable[opcode])[0])+''+str(self.symtable[operand]))
+        fp.write('^'+hex(self.optable[opcode][0]+self.symtable[operand]))
 
       elif(args==1):                                                      #Contains opcode
         opcode=input_line[0]
@@ -244,8 +237,9 @@ class Assembler:
     data = fp.readlines()
     for line in data:
       line = line.strip()
-      opcode, bincode, instr_Format, instr_length = line.split()          #Read File and Store assembly_code in optable dictionary.
-      self.optable[opcode] = [bincode, instr_Format, instr_length]
+      opcode, bincode, instr_length = line.split()                        #Read File and Store assembly_code in optable dictionary.
+      shift = ( int(instr_length) - 1 ) * 8                               #right shift required of opcode to start from msb
+      self.optable[opcode] = [int(bincode,16)<<shift , instr_length]
     fp.close()
 
 if __name__ == '__main__':
